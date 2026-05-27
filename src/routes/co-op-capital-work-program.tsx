@@ -460,10 +460,10 @@ function CoopPage() {
       {/* ── HERO ────────────────────────────────────────────────────────────── */}
       <section
         style={{
-          background: "#1C1814",
-          backgroundImage:
-            "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)",
-          backgroundSize: "24px 24px",
+          backgroundImage: "url('/src/assets/bg_option5_blueprint.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
           padding: "6rem 1.5rem 5rem",
           color: "#fff",
         }}
