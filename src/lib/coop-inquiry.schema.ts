@@ -12,21 +12,23 @@ export const workCategoryList = [
 ] as const;
 
 export const roleList = [
-  "Co-op Board Member",
   "Property Manager",
-  "Managing Agent",
-  "Architect / Consultant",
+  "Board Member",
+  "Superintendent",
   "Other",
 ] as const;
 
 export const coopInquirySchema = z.object({
   contactName: z.string().min(1, "Name is required"),
   contactEmail: z.string().email("Valid email required"),
-  buildingAddress: z.string().min(1, "Building address is required"),
+  phone: z.string().optional(),
+  propertyName: z.string().min(1, "Co-op / property name is required"),
+  role: z.string().optional(),
+  otherRoleText: z.string().optional(),
   numberOfUnits: z.string().optional(),
-  role: z.enum(roleList, { required_error: "Please select your role" }),
+  timeline: z.string().optional(),
   workCategories: z.array(z.string()).min(1, "Select at least one work category"),
-  additionalNotes: z.string().optional(),
+  message: z.string().optional(),
 });
 
 export type CoopInquiryFormData = z.infer<typeof coopInquirySchema>;

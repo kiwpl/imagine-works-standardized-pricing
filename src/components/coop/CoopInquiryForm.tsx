@@ -40,10 +40,21 @@ const errorStyle: React.CSSProperties = {
   fontFamily: "var(--font-body)",
 };
 
+const optionalMark: React.CSSProperties = {
+  color: "var(--muted)",
+  fontWeight: 400,
+};
+
+const requiredMark: React.CSSProperties = {
+  color: "#C04A22",
+  marginLeft: "2px",
+};
+
 export function CoopInquiryForm() {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [selectedRole, setSelectedRole] = useState<string>("");
 
   const {
     register,
@@ -114,16 +125,24 @@ export function CoopInquiryForm() {
       onSubmit={handleSubmit(onSubmit)}
       style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}
     >
-      {/* Contact Name */}
+      {/* Name* */}
       <div>
-        <label style={labelStyle}>Your Name</label>
-        <input {...register("contactName")} style={inputStyle} placeholder="e.g. Sarah Chen" />
+        <label style={labelStyle}>
+          Name<span style={requiredMark}>*</span>
+        </label>
+        <input
+          {...register("contactName")}
+          style={inputStyle}
+          placeholder="Your name"
+        />
         {errors.contactName && <p style={errorStyle}>{errors.contactName.message}</p>}
       </div>
 
-      {/* Email */}
+      {/* Email* */}
       <div>
-        <label style={labelStyle}>Email Address</label>
+        <label style={labelStyle}>
+          Email<span style={requiredMark}>*</span>
+        </label>
         <input
           {...register("contactEmail")}
           type="email"
@@ -133,55 +152,107 @@ export function CoopInquiryForm() {
         {errors.contactEmail && <p style={errorStyle}>{errors.contactEmail.message}</p>}
       </div>
 
-      {/* Building Address */}
-      <div>
-        <label style={labelStyle}>Building Address</label>
-        <input
-          {...register("buildingAddress")}
-          style={inputStyle}
-          placeholder="123 Main St, New York, NY 10001"
-        />
-        {errors.buildingAddress && <p style={errorStyle}>{errors.buildingAddress.message}</p>}
-      </div>
-
-      {/* Number of Units */}
+      {/* Phone (optional) */}
       <div>
         <label style={labelStyle}>
-          Approx. Number of Units{" "}
-          <span style={{ color: "var(--muted)", fontWeight: 400 }}>(optional)</span>
+          Phone <span style={optionalMark}>(optional)</span>
         </label>
-        <input {...register("numberOfUnits")} style={inputStyle} placeholder="e.g. 24" />
+        <input
+          {...register("phone")}
+          type="tel"
+          style={inputStyle}
+          placeholder="e.g. 416-555-0100"
+        />
       </div>
 
-      {/* Role */}
+      {/* Co-op / property name* */}
       <div>
-        <label style={labelStyle}>Your Role</label>
+        <label style={labelStyle}>
+          Co-op / property name<span style={requiredMark}>*</span>
+        </label>
+        <input
+          {...register("propertyName")}
+          style={inputStyle}
+          placeholder="e.g. 123 Main Street Co-op"
+        />
+        {errors.propertyName && <p style={errorStyle}>{errors.propertyName.message}</p>}
+      </div>
+
+      {/* Role — managed via useState so "Other" can reveal a free-text input */}
+      <div>
+        <label style={labelStyle}>Role</label>
         <select
-          {...register("role")}
+          value={selectedRole}
+          onChange={(e) => {
+            const val = e.target.value;
+            setSelectedRole(val);
+            setValue("role", val === "" ? undefined : val, { shouldValidate: true });
+          }}
           style={{ ...inputStyle, appearance: "none", cursor: "pointer" }}
-          defaultValue=""
         >
           <option value="" disabled>
             Select your role
           </option>
-          {roleList.map((role) => (
-            <option key={role} value={role}>
-              {role}
+          {roleList.map((r) => (
+            <option key={r} value={r}>
+              {r}
             </option>
           ))}
         </select>
-        {errors.role && <p style={errorStyle}>{errors.role.message}</p>}
+
+        {selectedRole === "Other" && (
+          <input
+            {...register("otherRoleText")}
+            style={{ ...inputStyle, marginTop: "0.5rem" }}
+            placeholder="Please describe your role"
+          />
+        )}
       </div>
 
-      {/* Work Categories */}
+      {/* Number of units (optional) */}
       <div>
-        <label style={labelStyle}>Work You&rsquo;re Planning</label>
+        <label style={labelStyle}>
+          Number of units <span style={optionalMark}>(optional)</span>
+        </label>
+        <input
+          {...register("numberOfUnits")}
+          type="number"
+          min="1"
+          style={inputStyle}
+          placeholder="e.g. 24"
+        />
+      </div>
+
+      {/* Timeline (optional) */}
+      <div>
+        <label style={labelStyle}>
+          Timeline <span style={optionalMark}>(optional)</span>
+        </label>
+        <input
+          {...register("timeline")}
+          style={inputStyle}
+          placeholder="e.g. next 30 days, this quarter, this year"
+        />
+      </div>
+
+      {/* Work categories — 2-column grid */}
+      <div>
+        <label style={labelStyle}>Work categories needed</label>
+        <p
+          style={{
+            fontFamily: "var(--font-body)",
+            fontSize: "0.8125rem",
+            color: "var(--muted)",
+            margin: "0 0 0.5rem",
+          }}
+        >
+          Select any that apply.
+        </p>
         <div
           style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-            marginTop: "0.375rem",
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "0.5rem 1rem",
           }}
         >
           {workCategoryList.map((cat) => (
@@ -189,11 +260,11 @@ export function CoopInquiryForm() {
               key={cat}
               style={{
                 display: "flex",
-                alignItems: "center",
-                gap: "0.625rem",
+                alignItems: "flex-start",
+                gap: "0.5rem",
                 cursor: "pointer",
                 fontFamily: "var(--font-body)",
-                fontSize: "0.9375rem",
+                fontSize: "0.875rem",
                 color: "var(--charcoal)",
               }}
             >
@@ -203,29 +274,31 @@ export function CoopInquiryForm() {
                 onChange={() => toggleCategory(cat)}
                 style={{
                   accentColor: "#C04A22",
-                  width: "16px",
-                  height: "16px",
+                  width: "15px",
+                  height: "15px",
                   cursor: "pointer",
                   flexShrink: 0,
+                  marginTop: "3px",
                 }}
               />
               {cat}
             </label>
           ))}
         </div>
-        {errors.workCategories && <p style={errorStyle}>{errors.workCategories.message}</p>}
+        {errors.workCategories && (
+          <p style={errorStyle}>{errors.workCategories.message}</p>
+        )}
       </div>
 
-      {/* Additional Notes */}
+      {/* Message (optional) */}
       <div>
         <label style={labelStyle}>
-          Additional Notes{" "}
-          <span style={{ color: "var(--muted)", fontWeight: 400 }}>(optional)</span>
+          Message <span style={optionalMark}>(optional)</span>
         </label>
         <textarea
-          {...register("additionalNotes")}
+          {...register("message")}
           style={{ ...inputStyle, minHeight: "96px", resize: "vertical" }}
-          placeholder="Any specific details about the work, timeline, or building conditions..."
+          placeholder="Anything specific about your building, scope, or board process?"
         />
       </div>
 

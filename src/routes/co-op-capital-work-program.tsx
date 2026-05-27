@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef } from "react";
-import { Upload, X } from "lucide-react";
+import { Layers, Mail, Upload, X } from "lucide-react";
 
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/co-op-capital-work-program")({
 // ─── Pricing table data ────────────────────────────────────────────────────────
 
 interface PricingRowData {
-  icon: string;
+  icon: React.ReactNode;
   workType: string;
   scope: string;
   range: string;
@@ -82,7 +82,7 @@ const pricingData: PricingRowData[] = [
     notes: "For units needing more substantial work",
   },
   {
-    icon: "🪵",
+    icon: <Layers size={15} color="#fff" strokeWidth={2} />,
     workType: "Flooring Replacement",
     scope: "Remove existing flooring, install new flooring, trim/transition work",
     range: "$7–$13 / sq. ft.",
@@ -363,13 +363,13 @@ function PricingTableRow({ row, index }: { row: PricingRowData; index: number })
 
 // ─── Static section data ───────────────────────────────────────────────────────
 
-const heroPills = [
+const heroPills: { icon: React.ReactNode; label: string }[] = [
   { icon: "🏠", label: "Unit turnovers" },
   { icon: "🚿", label: "Bathrooms" },
   { icon: "🍳", label: "Kitchens" },
   { icon: "🚪", label: "Hallways" },
   { icon: "🪜", label: "Stairwells" },
-  { icon: "🪵", label: "Flooring" },
+  { icon: <Layers size={12} color="#fff" strokeWidth={2} />, label: "Flooring" },
   { icon: "🖌️", label: "Painting" },
   { icon: "⚡", label: "Electrical / EV" },
 ];
@@ -415,7 +415,7 @@ const hiddenConditionSteps = [
   },
 ];
 
-const trustItems = [
+const trustItems: { icon: React.ReactNode; title: string; description: string }[] = [
   {
     icon: "🏢",
     title: "Built for multi-unit buildings",
@@ -433,7 +433,7 @@ const trustItems = [
     description: "We'll confirm which ranges apply and what we still need to know.",
   },
   {
-    icon: "✓",
+    icon: <Mail size={16} color="#fff" strokeWidth={2} />,
     title: "No obligation",
     description: "Requesting a sheet does not commit your building to any work.",
   },
@@ -460,10 +460,10 @@ function CoopPage() {
       {/* ── HERO ────────────────────────────────────────────────────────────── */}
       <section
         style={{
-          background: "#1C1814",
-          backgroundImage:
-            "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)",
-          backgroundSize: "24px 24px",
+          backgroundImage: "url('/src/assets/bg_option5_blueprint.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
           padding: "6rem 1.5rem 5rem",
           color: "#fff",
         }}
@@ -561,9 +561,9 @@ function CoopPage() {
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                background: "transparent",
-                color: "rgba(245,237,224,0.85)",
-                border: "1px solid rgba(245,237,224,0.25)",
+                background: "#F5EDE0",
+                color: "#1C1814",
+                border: "none",
                 borderRadius: "9999px",
                 padding: "0.75rem 1.5rem",
                 fontFamily: "var(--font-display)",
@@ -592,8 +592,8 @@ function CoopPage() {
                   display: "flex",
                   alignItems: "center",
                   gap: "0.625rem",
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.1)",
+                  background: "#F5EDE0",
+                  border: "none",
                   borderRadius: "10px",
                   padding: "0.625rem 0.875rem",
                 }}
@@ -617,7 +617,7 @@ function CoopPage() {
                   style={{
                     fontFamily: "var(--font-body)",
                     fontSize: "0.8125rem",
-                    color: "rgba(245,237,224,0.85)",
+                    color: "#1C1814",
                     fontStyle: "italic",
                   }}
                 >
@@ -760,7 +760,8 @@ function CoopPage() {
             <ul
               style={{
                 margin: 0,
-                padding: "0 0 0 1.25rem",
+                padding: 0,
+                listStyleType: "none",
                 display: "flex",
                 flexDirection: "column",
                 gap: "0.5rem",
@@ -770,12 +771,16 @@ function CoopPage() {
                 <li
                   key={item}
                   style={{
+                    display: "flex",
+                    alignItems: "baseline",
+                    gap: "0.5rem",
                     fontFamily: "var(--font-body)",
                     fontSize: "0.9375rem",
                     color: "var(--charcoal)",
                   }}
                 >
-                  {item}
+                  <span style={{ color: "#C04A22", fontSize: "1rem", flexShrink: 0 }}>•</span>
+                  <span>{item}</span>
                 </li>
               ))}
             </ul>
@@ -822,7 +827,8 @@ function CoopPage() {
             <ul
               style={{
                 margin: 0,
-                padding: "0 0 0 1.25rem",
+                padding: 0,
+                listStyleType: "none",
                 display: "flex",
                 flexDirection: "column",
                 gap: "0.5rem",
@@ -832,12 +838,16 @@ function CoopPage() {
                 <li
                   key={item}
                   style={{
+                    display: "flex",
+                    alignItems: "baseline",
+                    gap: "0.5rem",
                     fontFamily: "var(--font-body)",
                     fontSize: "0.9375rem",
                     color: "var(--charcoal)",
                   }}
                 >
-                  {item}
+                  <span style={{ color: "#C04A22", fontSize: "1rem", flexShrink: 0 }}>•</span>
+                  <span>{item}</span>
                 </li>
               ))}
             </ul>
