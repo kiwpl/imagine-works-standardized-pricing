@@ -9,8 +9,14 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as CoOpCapitalWorkProgramRouteImport } from './routes/co-op-capital-work-program'
 import { Route as IndexRouteImport } from './routes/index'
 
+const CoOpCapitalWorkProgramRoute = CoOpCapitalWorkProgramRouteImport.update({
+  id: '/co-op-capital-work-program',
+  path: '/co-op-capital-work-program',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +25,39 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/co-op-capital-work-program': typeof CoOpCapitalWorkProgramRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/co-op-capital-work-program': typeof CoOpCapitalWorkProgramRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/co-op-capital-work-program': typeof CoOpCapitalWorkProgramRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/co-op-capital-work-program'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/co-op-capital-work-program'
+  id: '__root__' | '/' | '/co-op-capital-work-program'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CoOpCapitalWorkProgramRoute: typeof CoOpCapitalWorkProgramRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/co-op-capital-work-program': {
+      id: '/co-op-capital-work-program'
+      path: '/co-op-capital-work-program'
+      fullPath: '/co-op-capital-work-program'
+      preLoaderRoute: typeof CoOpCapitalWorkProgramRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,7 +70,18 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CoOpCapitalWorkProgramRoute: CoOpCapitalWorkProgramRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

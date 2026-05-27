@@ -137,8 +137,25 @@
     border-color: var(--color-border);
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
   }
+}
+
+/* Imagine Work design tokens */
+:root {
+  --cream: #F5EDE0;
+  --sand: #EDE0D0;
+  --charcoal: #1C1814;
+  --accent: #C04A22;
+  --muted: #7A6A58;
+  --border: #D4C4B0;
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-mono: 'DM Mono', monospace;
+  --font-body: 'Lora', Georgia, serif;
 }
