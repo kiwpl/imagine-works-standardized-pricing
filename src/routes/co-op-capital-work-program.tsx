@@ -561,9 +561,9 @@ function CoopPage() {
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                background: "transparent",
-                color: "rgba(245,237,224,0.85)",
-                border: "1px solid rgba(245,237,224,0.25)",
+                background: "#F5EDE0",
+                color: "#1C1814",
+                border: "none",
                 borderRadius: "9999px",
                 padding: "0.75rem 1.5rem",
                 fontFamily: "var(--font-display)",
@@ -592,8 +592,8 @@ function CoopPage() {
                   display: "flex",
                   alignItems: "center",
                   gap: "0.625rem",
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.1)",
+                  background: "#F5EDE0",
+                  border: "none",
                   borderRadius: "10px",
                   padding: "0.625rem 0.875rem",
                 }}
@@ -617,7 +617,7 @@ function CoopPage() {
                   style={{
                     fontFamily: "var(--font-body)",
                     fontSize: "0.8125rem",
-                    color: "rgba(245,237,224,0.85)",
+                    color: "#1C1814",
                     fontStyle: "italic",
                   }}
                 >
