@@ -223,17 +223,17 @@ function PricingTableRow({ row, index }: { row: PricingRowData; index: number })
               background: expanded ? "#1C1814" : "transparent",
               color: expanded ? "#F5EDE0" : "var(--charcoal)",
               cursor: "pointer",
-              fontSize: "1.125rem",
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
               transition: "all 0.2s",
-              fontFamily: "monospace",
               lineHeight: 1,
+              padding: 0,
             }}
-            aria-label={expanded ? "Collapse" : "Expand reference image"}
+            aria-label={expanded ? "Hide reference images" : "Show reference images"}
+            aria-pressed={expanded}
           >
-            {expanded ? "−" : "+"}
+            <Eye size={16} strokeWidth={1.75} />
           </button>
         </td>
       </tr>
