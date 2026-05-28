@@ -18,7 +18,7 @@ export const roleList = [
   "Other",
 ] as const;
 
-  timeline: z.string().optional(),
+export const coopInquirySchema = z.object({
   contactName: z.string().min(1, "Name is required"),
   contactEmail: z.string().email("Valid email required"),
   phone: z.string().optional(),
@@ -26,7 +26,6 @@ export const roleList = [
   role: z.string().optional(),
   otherRoleText: z.string().optional(),
   numberOfUnits: z.string().optional(),
-  timeline: z.string().optional(),
   workCategories: z.array(z.string()).min(1, "Select at least one work category"),
   message: z.string().optional(),
 });
