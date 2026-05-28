@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Layers, Mail } from "lucide-react";
+import { Layers, Mail, Eye } from "lucide-react";
 
 import blueprintBg from "@/assets/bg_option5_blueprint.png";
 import { SiteHeader } from "@/components/site/SiteHeader";
