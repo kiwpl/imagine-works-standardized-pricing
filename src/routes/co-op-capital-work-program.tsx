@@ -967,7 +967,7 @@ function CoopPage() {
       </section>
 
       {/* ── WHAT CAN CHANGE / WHAT'S INCLUDED ───────────────────────────────── */}
-      <section style={{ background: "var(--sand)", padding: "5rem 1.5rem" }}>
+      <section id="scope" style={{ background: "var(--sand)", padding: "5rem 1.5rem", scrollMarginTop: "70px" }}>
         <div
           style={{
             maxWidth: "900px",

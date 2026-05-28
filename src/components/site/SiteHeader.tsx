@@ -56,7 +56,7 @@ export function SiteHeader() {
             Pricing
           </a>
           <a
-            href="#pricing-reference"
+            href="#scope"
             style={{
               fontFamily: "var(--font-mono)",
               fontSize: "0.75rem",
