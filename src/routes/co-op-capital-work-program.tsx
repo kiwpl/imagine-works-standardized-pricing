@@ -127,11 +127,28 @@ function PricingTableRow({ row, index }: { row: PricingRowData; index: number })
   const [image, setImage] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // Stable localStorage key derived from the work type name
+  const storageKey = `ref-image-${row.workType.toLowerCase().replace(/\s+/g, "-")}`;
+
+  // Load persisted image from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem(storageKey);
+    if (stored) setImage(stored);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => setImage(ev.target?.result as string);
+    reader.onload = (ev) => {
+      const base64 = ev.target?.result as string;
+      setImage(base64);
+      try {
+        localStorage.setItem(storageKey, base64);
+      } catch (err) {
+        console.warn("[PricingTableRow] Image too large to persist in localStorage:", err);
+      }
+    };
     reader.readAsDataURL(file);
   };
 
@@ -383,6 +400,7 @@ function PricingTableRow({ row, index }: { row: PricingRowData; index: number })
                 <button
                   onClick={() => {
                     setImage(null);
+                    localStorage.removeItem(storageKey);
                     if (fileRef.current) fileRef.current.value = "";
                   }}
                   style={{
