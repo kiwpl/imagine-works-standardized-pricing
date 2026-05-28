@@ -88,8 +88,18 @@ export function CoopInquiryForm() {
     try {
       await submitCoopInquiry({ data });
 
-      // Fire notification email — failure must not block success state
-      sendPricingRequestEmail({
+      // Show success immediately — email must never affect this
+      setSubmitted(true);
+    } catch {
+      setSubmitError("Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+
+    // Fire notification email completely outside the form try/catch.
+    // Any failure here is logged but never surfaces to the user.
+    try {
+      void sendPricingRequestEmail({
         data: {
           name: data.contactName,
           email: data.contactEmail,
@@ -102,14 +112,10 @@ export function CoopInquiryForm() {
           message: data.message,
         },
       }).catch((err: unknown) => {
-        console.error("[CoopInquiryForm] Email send failed (non-blocking):", err);
+        console.error("[CoopInquiryForm] Email send failed:", err);
       });
-
-      setSubmitted(true);
-    } catch {
-      setSubmitError("Something went wrong. Please try again.");
-    } finally {
-      setSubmitting(false);
+    } catch (err: unknown) {
+      console.error("[CoopInquiryForm] Email call failed synchronously:", err);
     }
   };
 

@@ -228,10 +228,10 @@ export const sendPricingRequestEmail = createServerFn({ method: "POST" })
 
     const { error } = await resend.emails.send({
       from: "onboarding@resend.dev",
-      to: "philip.a@prelook.com",
-      cc: "kelvin@prelook.com",
+      to: ["philip.a@prelook.com"],
+      cc: ["kelvin@prelook.com"],
       reply_to: data.email,
-      subject: `New Co-op Pricing Request — ${data.propertyName}`,
+      subject: `New Co-op Pricing Sheet Request — ${data.propertyName}`,
       html: buildEmailHtml(data),
     });
 
