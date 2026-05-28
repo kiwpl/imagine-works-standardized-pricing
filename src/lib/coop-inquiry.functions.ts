@@ -20,7 +20,6 @@ export const submitCoopInquiry = createServerFn({ method: "POST" })
         number_of_units: data.numberOfUnits ?? null,
         work_categories: data.workCategories,
         message: data.message ?? null,
-        message: data.message ?? null,
       },
     ]);
 
