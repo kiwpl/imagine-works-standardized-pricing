@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Layers, Mail, Upload, X } from "lucide-react";
+import { createPortal } from "react-dom";
 
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
@@ -131,6 +132,108 @@ function PricingTableRow({ row, index }: { row: PricingRowData; index: number })
     const reader = new FileReader();
     reader.onload = (ev) => setImage(ev.target?.result as string);
     reader.readAsDataURL(file);
+  };
+
+  // ── Lightbox state ──────────────────────────────────────────────────────────
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [translateX, setTranslateX] = useState(0);
+  const [translateY, setTranslateY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef<{ mouseX: number; mouseY: number; tx: number; ty: number } | null>(null);
+  const hasDraggedRef = useRef(false);
+
+  const openLightbox = () => {
+    setZoomLevel(1);
+    setTranslateX(0);
+    setTranslateY(0);
+    setIsDragging(false);
+    setIsLightboxOpen(true);
+  };
+
+  // Reset pan whenever zoom returns to exactly 1×
+  useEffect(() => {
+    if (zoomLevel === 1) {
+      setTranslateX(0);
+      setTranslateY(0);
+    }
+  }, [zoomLevel]);
+
+  // Keyboard + wheel listeners while lightbox is open
+  useEffect(() => {
+    if (!isLightboxOpen) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsLightboxOpen(false);
+        setZoomLevel(1);
+        setTranslateX(0);
+        setTranslateY(0);
+        setIsDragging(false);
+      }
+      if (e.key === "+" || e.key === "=") {
+        setZoomLevel((prev) => Math.min(5, prev + 0.25));
+      }
+      if (e.key === "-") {
+        setZoomLevel((prev) => Math.max(0.5, prev - 0.25));
+      }
+    };
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.25 : -0.25;
+      setZoomLevel((prev) => Math.min(5, Math.max(0.5, prev + delta)));
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("wheel", onWheel);
+    };
+  }, [isLightboxOpen]);
+
+  // ── Drag-to-pan handlers ────────────────────────────────────────────────────
+  const handleImageMouseDown = (e: React.MouseEvent) => {
+    if (zoomLevel <= 1) return;
+    e.stopPropagation();
+    e.preventDefault();
+    hasDraggedRef.current = false;
+    dragStartRef.current = { mouseX: e.clientX, mouseY: e.clientY, tx: translateX, ty: translateY };
+    setIsDragging(true);
+  };
+
+  const handleImageTouchStart = (e: React.TouchEvent) => {
+    if (zoomLevel <= 1) return;
+    e.stopPropagation();
+    hasDraggedRef.current = false;
+    const t = e.touches[0];
+    dragStartRef.current = { mouseX: t.clientX, mouseY: t.clientY, tx: translateX, ty: translateY };
+    setIsDragging(true);
+  };
+
+  const handleOverlayMouseMove = (e: React.MouseEvent) => {
+    if (!dragStartRef.current) return;
+    hasDraggedRef.current = true;
+    const dx = e.clientX - dragStartRef.current.mouseX;
+    const dy = e.clientY - dragStartRef.current.mouseY;
+    setTranslateX(dragStartRef.current.tx + dx);
+    setTranslateY(dragStartRef.current.ty + dy);
+  };
+
+  const handleOverlayTouchMove = (e: React.TouchEvent) => {
+    if (!dragStartRef.current) return;
+    hasDraggedRef.current = true;
+    const t = e.touches[0];
+    const dx = t.clientX - dragStartRef.current.mouseX;
+    const dy = t.clientY - dragStartRef.current.mouseY;
+    setTranslateX(dragStartRef.current.tx + dx);
+    setTranslateY(dragStartRef.current.ty + dy);
+  };
+
+  const stopDrag = () => {
+    dragStartRef.current = null;
+    setIsDragging(false);
   };
 
   return (
@@ -266,11 +369,14 @@ function PricingTableRow({ row, index }: { row: PricingRowData; index: number })
                 <img
                   src={image}
                   alt="Reference"
+                  onClick={openLightbox}
+                  title="Click to zoom"
                   style={{
                     maxWidth: "100%",
                     maxHeight: "320px",
                     borderRadius: "8px",
                     display: "block",
+                    cursor: "zoom-in",
                   }}
                 />
                 <button
@@ -353,6 +459,162 @@ function PricingTableRow({ row, index }: { row: PricingRowData; index: number })
           </td>
         </tr>
       )}
+      {/* Lightbox */}
+      {isLightboxOpen && image && typeof document !== "undefined" &&
+        createPortal(
+          <div
+            role="dialog"
+            aria-modal="true"
+            onClick={() => {
+              // Suppress close if the interaction was a drag, not a tap
+              if (hasDraggedRef.current) { hasDraggedRef.current = false; return; }
+              setIsLightboxOpen(false);
+              setZoomLevel(1);
+              setTranslateX(0);
+              setTranslateY(0);
+              setIsDragging(false);
+            }}
+            onMouseMove={handleOverlayMouseMove}
+            onMouseUp={stopDrag}
+            onMouseLeave={stopDrag}
+            onTouchMove={handleOverlayTouchMove}
+            onTouchEnd={stopDrag}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0, 0, 0, 0.85)",
+              zIndex: 9999,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              overflow: "hidden",
+              cursor: isDragging ? "grabbing" : "default",
+            }}
+          >
+            {/* Close button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsLightboxOpen(false);
+                setZoomLevel(1);
+                setTranslateX(0);
+                setTranslateY(0);
+                setIsDragging(false);
+              }}
+              style={{
+                position: "fixed",
+                top: "1rem",
+                right: "1rem",
+                background: "none",
+                border: "none",
+                color: "#fff",
+                fontSize: "2rem",
+                cursor: "pointer",
+                width: "32px",
+                height: "32px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 10001,
+                padding: 0,
+                lineHeight: 1,
+              }}
+              aria-label="Close lightbox"
+            >
+              ×
+            </button>
+
+            {/* Zoomed image — draggable when zoomed in */}
+            <img
+              src={image}
+              alt="Reference — zoomed"
+              draggable={false}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={handleImageMouseDown}
+              onTouchStart={handleImageTouchStart}
+              style={{
+                maxWidth: "80vw",
+                maxHeight: "80vh",
+                objectFit: "contain",
+                transform: `translate(${translateX}px, ${translateY}px) scale(${zoomLevel})`,
+                transformOrigin: "center center",
+                transition: isDragging ? "none" : "transform 0.1s ease",
+                userSelect: "none",
+                display: "block",
+                cursor: isDragging ? "grabbing" : zoomLevel > 1 ? "grab" : "default",
+              }}
+            />
+
+            {/* Zoom controls */}
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                position: "fixed",
+                bottom: "2rem",
+                left: "50%",
+                transform: "translateX(-50%)",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.75rem",
+                background: "rgba(0, 0, 0, 0.6)",
+                borderRadius: "9999px",
+                padding: "0.5rem 1.25rem",
+                zIndex: 10001,
+              }}
+            >
+              <button
+                onClick={(e) => { e.stopPropagation(); setZoomLevel((prev) => Math.max(0.5, prev - 0.25)); }}
+                style={{
+                  background: "rgba(255, 255, 255, 0.15)",
+                  border: "none",
+                  color: "#fff",
+                  borderRadius: "9999px",
+                  width: "32px",
+                  height: "32px",
+                  cursor: "pointer",
+                  fontSize: "1.25rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                aria-label="Zoom out"
+              >
+                −
+              </button>
+              <span
+                style={{
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: "0.8125rem",
+                  color: "#fff",
+                  minWidth: "3rem",
+                  textAlign: "center",
+                }}
+              >
+                {zoomLevel.toFixed(1)}×
+              </span>
+              <button
+                onClick={(e) => { e.stopPropagation(); setZoomLevel((prev) => Math.min(5, prev + 0.25)); }}
+                style={{
+                  background: "rgba(255, 255, 255, 0.15)",
+                  border: "none",
+                  color: "#fff",
+                  borderRadius: "9999px",
+                  width: "32px",
+                  height: "32px",
+                  cursor: "pointer",
+                  fontSize: "1.25rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                aria-label="Zoom in"
+              >
+                +
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )}
     </>
   );
 }
@@ -705,7 +967,7 @@ function CoopPage() {
       </section>
 
       {/* ── WHAT CAN CHANGE / WHAT'S INCLUDED ───────────────────────────────── */}
-      <section style={{ background: "var(--sand)", padding: "5rem 1.5rem" }}>
+      <section id="scope" style={{ background: "var(--sand)", padding: "5rem 1.5rem", scrollMarginTop: "70px" }}>
         <div
           style={{
             maxWidth: "900px",

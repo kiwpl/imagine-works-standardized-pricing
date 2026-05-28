@@ -23,18 +23,38 @@ export function SiteHeader() {
         {/* Logo */}
         <a
           href="/co-op-capital-work-program"
-          style={{ display: "flex", alignItems: "center", gap: "0.375rem", textDecoration: "none" }}
+          style={{ display: "flex", alignItems: "center", gap: "8px", textDecoration: "none" }}
         >
-          <span style={{ color: "#C04A22", fontSize: "1rem", lineHeight: 1 }}>●</span>
+          {/* Mark */}
+          <span
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "28px",
+              height: "28px",
+              borderRadius: "6px",
+              background: "#C04A22",
+              fontFamily: "var(--font-mono)",
+              fontWeight: 500,
+              fontSize: "11px",
+              color: "#fff",
+              letterSpacing: "-0.5px",
+              flexShrink: 0,
+            }}
+          >
+            IW
+          </span>
+          {/* Wordmark */}
           <span
             style={{
               fontFamily: "var(--font-display)",
-              fontSize: "1.125rem",
+              fontSize: "16px",
               fontWeight: 600,
               color: "#1C1814",
             }}
           >
-            Imagine Work
+            Imagine <em style={{ fontStyle: "italic", fontWeight: 300 }}>Work</em>
           </span>
         </a>
 
@@ -56,7 +76,7 @@ export function SiteHeader() {
             Pricing
           </a>
           <a
-            href="#pricing-reference"
+            href="#scope"
             style={{
               fontFamily: "var(--font-mono)",
               fontSize: "0.75rem",
