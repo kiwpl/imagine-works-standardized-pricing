@@ -8,8 +8,8 @@ const emailInputSchema = z.object({
   email: z.string().email(),
   phone: z.string().optional(),
   propertyName: z.string(),
+  role: z.string().optional(),
   numberOfUnits: z.string().optional(),
-  workCategories: z.array(z.string()),
   workCategories: z.array(z.string()),
   message: z.string().optional(),
 });
@@ -36,12 +36,10 @@ function buildEmailHtml(d: EmailInput): string {
   const role = d.role ?? "—";
   const phone = d.phone ?? "Not provided";
   const units = d.numberOfUnits ?? null;
-  const timeline = d.timeline ?? null;
 
   // Summary sentence
   let summary = `<strong>${d.name}</strong> has requested a Co-op Pricing Sheet for <strong>${d.propertyName}</strong>. They are a <strong>${role}</strong>`;
   if (units) summary += ` with <strong>${units} units</strong>`;
-  if (timeline) summary += ` and a timeline of <strong>${timeline}</strong>`;
   summary += ".";
 
   // Work category pills
@@ -155,12 +153,8 @@ function buildEmailHtml(d: EmailInput): string {
                 <p style="margin:0;font-family:Georgia,serif;font-size:14px;color:${units ? "#1C1814" : "#A08870"};font-style:${units ? "normal" : "italic"};">${units ?? "Not provided"}</p>
               </td>
             </tr>
-            <tr>
-              <td colspan="2" style="padding:10px 14px;">
-                <p style="margin:0 0 2px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#A08870;">Timeline</p>
-                <p style="margin:0;font-family:Georgia,serif;font-size:14px;color:${timeline ? "#1C1814" : "#A08870"};font-style:${timeline ? "normal" : "italic"};">${timeline ?? "Not provided"}</p>
-              </td>
-            </tr>
+          </table>
+        </td></tr>
           </table>
         </td></tr>
 
