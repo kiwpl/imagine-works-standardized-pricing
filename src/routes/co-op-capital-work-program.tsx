@@ -123,7 +123,7 @@ const pricingData: PricingRowData[] = [
 // ─── Pricing row with before/after reference image slider ─────────────────────
 
 function PricingTableRow({ row, index }: { row: PricingRowData; index: number }) {
-  const [expanded, setExpanded] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   // Slug for localStorage keys: ref-before-{slug} / ref-after-{slug}
   const rowSlug = row.workType.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
