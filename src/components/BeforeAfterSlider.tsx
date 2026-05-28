@@ -105,9 +105,7 @@ export function BeforeAfterSlider({ beforeSrc, afterSrc }: BeforeAfterSliderProp
           aspectRatio: aspect ? String(aspect) : "16 / 9",
           maxWidth: "100%",
           maxHeight: "100%",
-          width: aspect ? `min(100%, ${aspect} * 100%)` : "100%",
-          // Use a CSS calc fallback so the box hugs the image exactly:
-          // height is driven by aspectRatio; width is capped by parent.
+          height: "100%",
           cursor: "crosshair",
         }}
         onClick={handleContainerClick}
