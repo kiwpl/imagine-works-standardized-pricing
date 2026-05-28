@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { Resend } from "resend";
 import { z } from "zod";
 
 // ─── Input schema ──────────────────────────────────────────────────────────────
@@ -224,21 +223,35 @@ export const sendPricingRequestEmail = createServerFn({ method: "POST" })
       return { sent: false, reason: "no_api_key" };
     }
 
-    const resend = new Resend(apiKey);
+    try {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: "onboarding@resend.dev",
+          to: ["philip.a@prelook.com"],
+          cc: ["kelvin@prelook.com"],
+          reply_to: data.email,
+          subject: `New Co-op Pricing Sheet Request — ${data.propertyName}`,
+          html: buildEmailHtml(data),
+        }),
+      });
 
-    const { error } = await resend.emails.send({
-      from: "onboarding@resend.dev",
-      to: ["philip.a@prelook.com"],
-      cc: ["kelvin@prelook.com"],
-      reply_to: data.email,
-      subject: `New Co-op Pricing Sheet Request — ${data.propertyName}`,
-      html: buildEmailHtml(data),
-    });
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error(
+          `[sendPricingRequestEmail] Resend API error [${res.status}]:`,
+          errText,
+        );
+        return { sent: false, reason: `resend_${res.status}` };
+      }
 
-    if (error) {
-      console.error("[sendPricingRequestEmail] Resend error:", error);
-      return { sent: false, reason: error.message };
+      return { sent: true };
+    } catch (err) {
+      console.error("[sendPricingRequestEmail] Fetch failed:", err);
+      return { sent: false, reason: "fetch_failed" };
     }
-
-    return { sent: true };
   });
