@@ -1,12 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useRef, useEffect } from "react";
-import { Layers, Mail, Upload, X } from "lucide-react";
-import { createPortal } from "react-dom";
+import { useState } from "react";
+import { Layers, Mail } from "lucide-react";
 
 import blueprintBg from "@/assets/bg_option5_blueprint.png";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { CoopInquiryForm } from "@/components/coop/CoopInquiryForm";
+import { ReferenceImageSection } from "@/components/ReferenceImageSection";
 
 export const Route = createFileRoute("/co-op-capital-work-program")({
   head: () => ({
@@ -120,139 +120,13 @@ const pricingData: PricingRowData[] = [
   },
 ];
 
-// ─── Pricing row with expandable image upload ──────────────────────────────────
+// ─── Pricing row with before/after reference image slider ─────────────────────
 
 function PricingTableRow({ row, index }: { row: PricingRowData; index: number }) {
   const [expanded, setExpanded] = useState(false);
-  const [image, setImage] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
 
-  // Stable localStorage key derived from the work type name
-  const storageKey = `ref-image-${row.workType.toLowerCase().replace(/\s+/g, "-")}`;
-
-  // Load persisted image from localStorage on mount
-  useEffect(() => {
-    const stored = localStorage.getItem(storageKey);
-    if (stored) setImage(stored);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const base64 = ev.target?.result as string;
-      setImage(base64);
-      try {
-        localStorage.setItem(storageKey, base64);
-      } catch (err) {
-        console.warn("[PricingTableRow] Image too large to persist in localStorage:", err);
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
-  // ── Lightbox state ──────────────────────────────────────────────────────────
-  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-  const [zoomLevel, setZoomLevel] = useState(1);
-  const [translateX, setTranslateX] = useState(0);
-  const [translateY, setTranslateY] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const dragStartRef = useRef<{ mouseX: number; mouseY: number; tx: number; ty: number } | null>(null);
-  const hasDraggedRef = useRef(false);
-
-  const openLightbox = () => {
-    setZoomLevel(1);
-    setTranslateX(0);
-    setTranslateY(0);
-    setIsDragging(false);
-    setIsLightboxOpen(true);
-  };
-
-  // Reset pan whenever zoom returns to exactly 1×
-  useEffect(() => {
-    if (zoomLevel === 1) {
-      setTranslateX(0);
-      setTranslateY(0);
-    }
-  }, [zoomLevel]);
-
-  // Keyboard + wheel listeners while lightbox is open
-  useEffect(() => {
-    if (!isLightboxOpen) return;
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setIsLightboxOpen(false);
-        setZoomLevel(1);
-        setTranslateX(0);
-        setTranslateY(0);
-        setIsDragging(false);
-      }
-      if (e.key === "+" || e.key === "=") {
-        setZoomLevel((prev) => Math.min(5, prev + 0.25));
-      }
-      if (e.key === "-") {
-        setZoomLevel((prev) => Math.max(0.5, prev - 0.25));
-      }
-    };
-
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      const delta = e.deltaY < 0 ? 0.25 : -0.25;
-      setZoomLevel((prev) => Math.min(5, Math.max(0.5, prev + delta)));
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("wheel", onWheel, { passive: false });
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("wheel", onWheel);
-    };
-  }, [isLightboxOpen]);
-
-  // ── Drag-to-pan handlers ────────────────────────────────────────────────────
-  const handleImageMouseDown = (e: React.MouseEvent) => {
-    if (zoomLevel <= 1) return;
-    e.stopPropagation();
-    e.preventDefault();
-    hasDraggedRef.current = false;
-    dragStartRef.current = { mouseX: e.clientX, mouseY: e.clientY, tx: translateX, ty: translateY };
-    setIsDragging(true);
-  };
-
-  const handleImageTouchStart = (e: React.TouchEvent) => {
-    if (zoomLevel <= 1) return;
-    e.stopPropagation();
-    hasDraggedRef.current = false;
-    const t = e.touches[0];
-    dragStartRef.current = { mouseX: t.clientX, mouseY: t.clientY, tx: translateX, ty: translateY };
-    setIsDragging(true);
-  };
-
-  const handleOverlayMouseMove = (e: React.MouseEvent) => {
-    if (!dragStartRef.current) return;
-    hasDraggedRef.current = true;
-    const dx = e.clientX - dragStartRef.current.mouseX;
-    const dy = e.clientY - dragStartRef.current.mouseY;
-    setTranslateX(dragStartRef.current.tx + dx);
-    setTranslateY(dragStartRef.current.ty + dy);
-  };
-
-  const handleOverlayTouchMove = (e: React.TouchEvent) => {
-    if (!dragStartRef.current) return;
-    hasDraggedRef.current = true;
-    const t = e.touches[0];
-    const dx = t.clientX - dragStartRef.current.mouseX;
-    const dy = t.clientY - dragStartRef.current.mouseY;
-    setTranslateX(dragStartRef.current.tx + dx);
-    setTranslateY(dragStartRef.current.ty + dy);
-  };
-
-  const stopDrag = () => {
-    dragStartRef.current = null;
-    setIsDragging(false);
-  };
+  // Slug for localStorage keys: ref-before-{slug} / ref-after-{slug}
+  const rowSlug = row.workType.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 
   return (
     <>
@@ -364,7 +238,7 @@ function PricingTableRow({ row, index }: { row: PricingRowData; index: number })
         </td>
       </tr>
 
-      {/* Expanded image panel */}
+      {/* Expanded before/after reference image panel */}
       {expanded && (
         <tr style={{ background: "rgba(237, 224, 208, 0.4)" }}>
           <td colSpan={5} style={{ padding: "1.25rem 1.5rem" }}>
@@ -375,265 +249,15 @@ function PricingTableRow({ row, index }: { row: PricingRowData; index: number })
                 letterSpacing: "0.1em",
                 textTransform: "uppercase",
                 color: "var(--muted)",
-                marginBottom: "0.75rem",
                 margin: "0 0 0.75rem",
               }}
             >
               Reference Image
             </p>
-
-            {image ? (
-              <div style={{ position: "relative", display: "inline-block" }}>
-                <img
-                  src={image}
-                  alt="Reference"
-                  onClick={openLightbox}
-                  title="Click to zoom"
-                  style={{
-                    maxWidth: "100%",
-                    maxHeight: "320px",
-                    borderRadius: "8px",
-                    display: "block",
-                    cursor: "zoom-in",
-                  }}
-                />
-                <button
-                  onClick={() => {
-                    setImage(null);
-                    localStorage.removeItem(storageKey);
-                    if (fileRef.current) fileRef.current.value = "";
-                  }}
-                  style={{
-                    position: "absolute",
-                    top: "0.5rem",
-                    right: "0.5rem",
-                    background: "rgba(28, 24, 20, 0.7)",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "50%",
-                    width: "28px",
-                    height: "28px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    transition: "background 0.15s",
-                  }}
-                  aria-label="Remove image"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            ) : (
-              <div
-                onClick={() => fileRef.current?.click()}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => e.key === "Enter" && fileRef.current?.click()}
-                style={{
-                  border: "2px dashed var(--border)",
-                  borderRadius: "8px",
-                  padding: "2rem",
-                  textAlign: "center",
-                  cursor: "pointer",
-                  background: "rgba(245, 237, 224, 0.5)",
-                  maxWidth: "420px",
-                }}
-              >
-                <Upload
-                  size={24}
-                  style={{ color: "var(--muted)", margin: "0 auto 0.5rem", display: "block" }}
-                />
-                <p
-                  style={{
-                    fontFamily: "var(--font-body)",
-                    color: "var(--charcoal)",
-                    fontSize: "0.9375rem",
-                    margin: "0 0 0.25rem",
-                  }}
-                >
-                  Drop an image or click to browse
-                </p>
-                <p
-                  style={{
-                    fontFamily: "var(--font-mono)",
-                    fontSize: "0.6875rem",
-                    color: "var(--muted)",
-                    margin: 0,
-                    letterSpacing: "0.08em",
-                  }}
-                >
-                  JPG · PNG · WEBP
-                </p>
-              </div>
-            )}
-
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={handleFileChange}
-              style={{ display: "none" }}
-            />
+            <ReferenceImageSection rowSlug={rowSlug} />
           </td>
         </tr>
       )}
-      {/* Lightbox */}
-      {isLightboxOpen && image && typeof document !== "undefined" &&
-        createPortal(
-          <div
-            role="dialog"
-            aria-modal="true"
-            onClick={() => {
-              // Suppress close if the interaction was a drag, not a tap
-              if (hasDraggedRef.current) { hasDraggedRef.current = false; return; }
-              setIsLightboxOpen(false);
-              setZoomLevel(1);
-              setTranslateX(0);
-              setTranslateY(0);
-              setIsDragging(false);
-            }}
-            onMouseMove={handleOverlayMouseMove}
-            onMouseUp={stopDrag}
-            onMouseLeave={stopDrag}
-            onTouchMove={handleOverlayTouchMove}
-            onTouchEnd={stopDrag}
-            style={{
-              position: "fixed",
-              inset: 0,
-              background: "rgba(0, 0, 0, 0.85)",
-              zIndex: 9999,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              overflow: "hidden",
-              cursor: isDragging ? "grabbing" : "default",
-            }}
-          >
-            {/* Close button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsLightboxOpen(false);
-                setZoomLevel(1);
-                setTranslateX(0);
-                setTranslateY(0);
-                setIsDragging(false);
-              }}
-              style={{
-                position: "fixed",
-                top: "1rem",
-                right: "1rem",
-                background: "none",
-                border: "none",
-                color: "#fff",
-                fontSize: "2rem",
-                cursor: "pointer",
-                width: "32px",
-                height: "32px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                zIndex: 10001,
-                padding: 0,
-                lineHeight: 1,
-              }}
-              aria-label="Close lightbox"
-            >
-              ×
-            </button>
-
-            {/* Zoomed image — draggable when zoomed in */}
-            <img
-              src={image}
-              alt="Reference — zoomed"
-              draggable={false}
-              onClick={(e) => e.stopPropagation()}
-              onMouseDown={handleImageMouseDown}
-              onTouchStart={handleImageTouchStart}
-              style={{
-                maxWidth: "80vw",
-                maxHeight: "80vh",
-                objectFit: "contain",
-                transform: `translate(${translateX}px, ${translateY}px) scale(${zoomLevel})`,
-                transformOrigin: "center center",
-                transition: isDragging ? "none" : "transform 0.1s ease",
-                userSelect: "none",
-                display: "block",
-                cursor: isDragging ? "grabbing" : zoomLevel > 1 ? "grab" : "default",
-              }}
-            />
-
-            {/* Zoom controls */}
-            <div
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                position: "fixed",
-                bottom: "2rem",
-                left: "50%",
-                transform: "translateX(-50%)",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.75rem",
-                background: "rgba(0, 0, 0, 0.6)",
-                borderRadius: "9999px",
-                padding: "0.5rem 1.25rem",
-                zIndex: 10001,
-              }}
-            >
-              <button
-                onClick={(e) => { e.stopPropagation(); setZoomLevel((prev) => Math.max(0.5, prev - 0.25)); }}
-                style={{
-                  background: "rgba(255, 255, 255, 0.15)",
-                  border: "none",
-                  color: "#fff",
-                  borderRadius: "9999px",
-                  width: "32px",
-                  height: "32px",
-                  cursor: "pointer",
-                  fontSize: "1.25rem",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-                aria-label="Zoom out"
-              >
-                −
-              </button>
-              <span
-                style={{
-                  fontFamily: "'DM Mono', monospace",
-                  fontSize: "0.8125rem",
-                  color: "#fff",
-                  minWidth: "3rem",
-                  textAlign: "center",
-                }}
-              >
-                {zoomLevel.toFixed(1)}×
-              </span>
-              <button
-                onClick={(e) => { e.stopPropagation(); setZoomLevel((prev) => Math.min(5, prev + 0.25)); }}
-                style={{
-                  background: "rgba(255, 255, 255, 0.15)",
-                  border: "none",
-                  color: "#fff",
-                  borderRadius: "9999px",
-                  width: "32px",
-                  height: "32px",
-                  cursor: "pointer",
-                  fontSize: "1.25rem",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-                aria-label="Zoom in"
-              >
-                +
-              </button>
-            </div>
-          </div>,
-          document.body,
-        )}
     </>
   );
 }
