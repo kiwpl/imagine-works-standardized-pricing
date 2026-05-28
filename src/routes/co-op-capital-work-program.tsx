@@ -191,15 +191,11 @@ function PricingTableRow({ row, index }: { row: PricingRowData; index: number })
         <td style={{ padding: "1rem 1.25rem", verticalAlign: "top", whiteSpace: "nowrap" }}>
           <span
             style={{
-              display: "inline-block",
-              background: "#F5EDE0",
-              border: "1px solid #D4C4B0",
-              borderRadius: "9999px",
-              padding: "0.25rem 0.875rem",
-              fontFamily: "var(--font-mono)",
-              fontSize: "0.8125rem",
-              color: "var(--charcoal)",
-              fontWeight: 500,
+              fontFamily: "'Fraunces', serif",
+              fontSize: "15px",
+              fontWeight: 600,
+              color: "#1C1814",
+              whiteSpace: "nowrap",
             }}
           >
             {row.range}
