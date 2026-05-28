@@ -26,7 +26,6 @@ export const coopInquirySchema = z.object({
   role: z.string().optional(),
   otherRoleText: z.string().optional(),
   numberOfUnits: z.string().optional(),
-  timeline: z.string().optional(),
   workCategories: z.array(z.string()).min(1, "Select at least one work category"),
   message: z.string().optional(),
 });
