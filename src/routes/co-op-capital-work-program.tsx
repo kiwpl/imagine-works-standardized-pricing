@@ -6,7 +6,7 @@ import blueprintBg from "@/assets/bg_option5_blueprint.png";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { CoopInquiryForm } from "@/components/coop/CoopInquiryForm";
-import { ReferenceImageSection } from "@/components/ReferenceImageSection";
+import { ReferenceImageLightbox } from "@/components/ReferenceImageSection";
 
 export const Route = createFileRoute("/co-op-capital-work-program")({
   head: () => ({
