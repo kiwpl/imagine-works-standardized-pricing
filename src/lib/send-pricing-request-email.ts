@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { Resend } from "resend";
 import { z } from "zod";
 
 // ─── Input schema ──────────────────────────────────────────────────────────────
@@ -11,7 +10,6 @@ const emailInputSchema = z.object({
   propertyName: z.string(),
   role: z.string().optional(),
   numberOfUnits: z.string().optional(),
-  timeline: z.string().optional(),
   workCategories: z.array(z.string()),
   message: z.string().optional(),
 });
@@ -38,12 +36,10 @@ function buildEmailHtml(d: EmailInput): string {
   const role = d.role ?? "—";
   const phone = d.phone ?? "Not provided";
   const units = d.numberOfUnits ?? null;
-  const timeline = d.timeline ?? null;
 
   // Summary sentence
   let summary = `<strong>${d.name}</strong> has requested a Co-op Pricing Sheet for <strong>${d.propertyName}</strong>. They are a <strong>${role}</strong>`;
   if (units) summary += ` with <strong>${units} units</strong>`;
-  if (timeline) summary += ` and a timeline of <strong>${timeline}</strong>`;
   summary += ".";
 
   // Work category pills
@@ -157,12 +153,8 @@ function buildEmailHtml(d: EmailInput): string {
                 <p style="margin:0;font-family:Georgia,serif;font-size:14px;color:${units ? "#1C1814" : "#A08870"};font-style:${units ? "normal" : "italic"};">${units ?? "Not provided"}</p>
               </td>
             </tr>
-            <tr>
-              <td colspan="2" style="padding:10px 14px;">
-                <p style="margin:0 0 2px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#A08870;">Timeline</p>
-                <p style="margin:0;font-family:Georgia,serif;font-size:14px;color:${timeline ? "#1C1814" : "#A08870"};font-style:${timeline ? "normal" : "italic"};">${timeline ?? "Not provided"}</p>
-              </td>
-            </tr>
+          </table>
+        </td></tr>
           </table>
         </td></tr>
 
@@ -224,21 +216,35 @@ export const sendPricingRequestEmail = createServerFn({ method: "POST" })
       return { sent: false, reason: "no_api_key" };
     }
 
-    const resend = new Resend(apiKey);
+    try {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: "noreply@fixunit.ca",
+          to: ["philip.a@prelook.com"],
+          cc: ["kelvin@prelook.com"],
+          reply_to: data.email,
+          subject: `New Co-op Pricing Sheet Request — ${data.propertyName}`,
+          html: buildEmailHtml(data),
+        }),
+      });
 
-    const { error } = await resend.emails.send({
-      from: "onboarding@resend.dev",
-      to: "philip.a@prelook.com",
-      cc: "kelvin@prelook.com",
-      reply_to: data.email,
-      subject: `New Co-op Pricing Request — ${data.propertyName}`,
-      html: buildEmailHtml(data),
-    });
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error(
+          `[sendPricingRequestEmail] Resend API error [${res.status}]:`,
+          errText,
+        );
+        return { sent: false, reason: `resend_${res.status}` };
+      }
 
-    if (error) {
-      console.error("[sendPricingRequestEmail] Resend error:", error);
-      return { sent: false, reason: error.message };
+      return { sent: true };
+    } catch (err) {
+      console.error("[sendPricingRequestEmail] Fetch failed:", err);
+      return { sent: false, reason: "fetch_failed" };
     }
-
-    return { sent: true };
   });

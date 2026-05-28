@@ -1,10 +1,12 @@
+import brickBg from "@/assets/bg_option3_brick.png";
+
 export function SiteFooter() {
   const year = new Date().getFullYear();
 
   return (
     <footer
       style={{
-        backgroundImage: "url('/src/assets/bg_option3_brick.png')",
+        backgroundImage: `url(${brickBg})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",

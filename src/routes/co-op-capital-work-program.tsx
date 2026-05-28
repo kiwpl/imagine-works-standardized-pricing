@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { Layers, Mail, Upload, X } from "lucide-react";
 import { createPortal } from "react-dom";
 
+import blueprintBg from "@/assets/bg_option5_blueprint.png";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { CoopInquiryForm } from "@/components/coop/CoopInquiryForm";
@@ -718,7 +719,7 @@ function CoopPage() {
       {/* ── HERO ────────────────────────────────────────────────────────────── */}
       <section
         style={{
-          backgroundImage: "url('/src/assets/bg_option5_blueprint.png')",
+          backgroundImage: `url(${blueprintBg})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",

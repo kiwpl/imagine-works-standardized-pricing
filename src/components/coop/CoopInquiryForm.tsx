@@ -88,8 +88,18 @@ export function CoopInquiryForm() {
     try {
       await submitCoopInquiry({ data });
 
-      // Fire notification email — failure must not block success state
-      sendPricingRequestEmail({
+      // Show success immediately — email must never affect this
+      setSubmitted(true);
+    } catch {
+      setSubmitError("Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+
+    // Fire notification email completely outside the form try/catch.
+    // Any failure here is logged but never surfaces to the user.
+    try {
+      void sendPricingRequestEmail({
         data: {
           name: data.contactName,
           email: data.contactEmail,
@@ -97,19 +107,14 @@ export function CoopInquiryForm() {
           propertyName: data.propertyName,
           role: data.role,
           numberOfUnits: data.numberOfUnits,
-          timeline: data.timeline,
           workCategories: data.workCategories,
           message: data.message,
         },
       }).catch((err: unknown) => {
-        console.error("[CoopInquiryForm] Email send failed (non-blocking):", err);
+        console.error("[CoopInquiryForm] Email send failed:", err);
       });
-
-      setSubmitted(true);
-    } catch {
-      setSubmitError("Something went wrong. Please try again.");
-    } finally {
-      setSubmitting(false);
+    } catch (err: unknown) {
+      console.error("[CoopInquiryForm] Email call failed synchronously:", err);
     }
   };
 
@@ -242,17 +247,7 @@ export function CoopInquiryForm() {
         />
       </div>
 
-      {/* Timeline (optional) */}
-      <div>
-        <label style={labelStyle}>
-          Timeline <span style={optionalMark}>(optional)</span>
-        </label>
-        <input
-          {...register("timeline")}
-          style={inputStyle}
-          placeholder="e.g. next 30 days, this quarter, this year"
-        />
-      </div>
+      {/* Work categories — 2-column grid */}
 
       {/* Work categories — 2-column grid */}
       <div>

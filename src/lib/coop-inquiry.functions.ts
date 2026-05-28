@@ -17,15 +17,16 @@ export const submitCoopInquiry = createServerFn({ method: "POST" })
         contact_email: data.contactEmail,
         phone: data.phone ?? null,
         property_name: data.propertyName,
-        role: effectiveRole,
         number_of_units: data.numberOfUnits ?? null,
-        timeline: data.timeline ?? null,
         work_categories: data.workCategories,
         message: data.message ?? null,
       },
     ]);
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("[submitCoopInquiry] Supabase error:", JSON.stringify(error));
+      throw new Error(`Supabase insert failed: ${error.message} (code: ${error.code})`);
+    }
 
     return { success: true };
   });
