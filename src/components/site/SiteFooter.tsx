@@ -38,7 +38,28 @@ export function SiteFooter() {
           }}
         >
           {/* Logo */}
-          <div>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            {/* Mark */}
+            <span
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "28px",
+                height: "28px",
+                borderRadius: "6px",
+                background: "#C04A22",
+                fontFamily: "var(--font-mono)",
+                fontWeight: 500,
+                fontSize: "11px",
+                color: "#fff",
+                letterSpacing: "-0.5px",
+                flexShrink: 0,
+              }}
+            >
+              IW
+            </span>
+            {/* Wordmark */}
             <span
               style={{
                 fontFamily: "var(--font-display)",
