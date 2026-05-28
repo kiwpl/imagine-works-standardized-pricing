@@ -93,7 +93,7 @@ export function BeforeAfterSlider({ beforeSrc, afterSrc }: BeforeAfterSliderProp
       <img
         src={beforeSrc}
         alt="Before"
-        className="absolute inset-0 w-full h-full object-cover"
+        className="absolute inset-0 w-full h-full object-contain"
         draggable={false}
       />
 
@@ -101,7 +101,7 @@ export function BeforeAfterSlider({ beforeSrc, afterSrc }: BeforeAfterSliderProp
       <img
         src={afterSrc}
         alt="After"
-        className="absolute inset-0 w-full h-full object-cover"
+        className="absolute inset-0 w-full h-full object-contain"
         style={{ clipPath: `inset(0 0 0 ${position}%)` }}
         draggable={false}
       />
