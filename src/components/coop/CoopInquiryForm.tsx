@@ -9,6 +9,7 @@ import {
   type CoopInquiryFormData,
 } from "@/lib/coop-inquiry.schema";
 import { submitCoopInquiry } from "@/lib/coop-inquiry.functions";
+import { sendPricingRequestEmail } from "@/lib/send-pricing-request-email";
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
@@ -86,6 +87,24 @@ export function CoopInquiryForm() {
     setSubmitError(null);
     try {
       await submitCoopInquiry({ data });
+
+      // Fire notification email — failure must not block success state
+      sendPricingRequestEmail({
+        data: {
+          name: data.contactName,
+          email: data.contactEmail,
+          phone: data.phone,
+          propertyName: data.propertyName,
+          role: data.role,
+          numberOfUnits: data.numberOfUnits,
+          timeline: data.timeline,
+          workCategories: data.workCategories,
+          message: data.message,
+        },
+      }).catch((err: unknown) => {
+        console.error("[CoopInquiryForm] Email send failed (non-blocking):", err);
+      });
+
       setSubmitted(true);
     } catch {
       setSubmitError("Something went wrong. Please try again.");
