@@ -25,7 +25,10 @@ export const submitCoopInquiry = createServerFn({ method: "POST" })
       },
     ]);
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("[submitCoopInquiry] Supabase error:", JSON.stringify(error));
+      throw new Error(`Supabase insert failed: ${error.message} (code: ${error.code})`);
+    }
 
     return { success: true };
   });
