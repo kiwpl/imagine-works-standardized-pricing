@@ -687,3 +687,195 @@ export function ReferenceImageSection({ rowSlug }: ReferenceImageSectionProps) {
     </div>
   );
 }
+
+// ─── Reference image LIGHTBOX (all-in-one modal) ──────────────────────────────
+// Opened directly from the eye-icon button on each pricing row.
+// Handles all three states inside the modal: empty / partial / full.
+
+interface ReferenceImageLightboxProps {
+  rowSlug: string;
+  onClose: () => void;
+}
+
+export function ReferenceImageLightbox({ rowSlug, onClose }: ReferenceImageLightboxProps) {
+  const [beforeSrc, setBeforeSrc] = useState<string | null>(null);
+  const [afterSrc, setAfterSrc] = useState<string | null>(null);
+
+  // Load persisted images on mount
+  useEffect(() => {
+    const storedBefore = localStorage.getItem(`ref-before-${rowSlug}`);
+    const storedAfter = localStorage.getItem(`ref-after-${rowSlug}`);
+    if (storedBefore) setBeforeSrc(storedBefore);
+    if (storedAfter) setAfterSrc(storedAfter);
+  }, [rowSlug]);
+
+  // Escape closes
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const handleUpload = useCallback(
+    (side: "before" | "after", file: File) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        if (side === "before") {
+          setBeforeSrc(dataUrl);
+          localStorage.setItem(`ref-before-${rowSlug}`, dataUrl);
+        } else {
+          setAfterSrc(dataUrl);
+          localStorage.setItem(`ref-after-${rowSlug}`, dataUrl);
+        }
+      };
+      reader.readAsDataURL(file);
+    },
+    [rowSlug],
+  );
+
+  const removeBefore = useCallback(() => {
+    setBeforeSrc(null);
+    localStorage.removeItem(`ref-before-${rowSlug}`);
+  }, [rowSlug]);
+
+  const removeAfter = useCallback(() => {
+    setAfterSrc(null);
+    localStorage.removeItem(`ref-after-${rowSlug}`);
+  }, [rowSlug]);
+
+  if (typeof document === "undefined") return null;
+
+  // Single-image panel (used in partial state)
+  const renderSingle = (src: string, label: "BEFORE" | "AFTER", onRemove: () => void) => (
+    <div className="flex-1 min-w-0 flex flex-col">
+      <div style={ZONE_LABEL_STYLE}>{label}</div>
+      <div className="relative rounded-lg overflow-hidden" style={{ height: "320px", background: "#0a0a0a" }}>
+        <img src={src} alt={label} className="w-full h-full object-contain" draggable={false} />
+        <div
+          className={`absolute top-2 ${label === "BEFORE" ? "left-2" : "right-2"} pointer-events-none`}
+          style={BADGE_STYLE}
+        >
+          {label}
+        </div>
+        <button
+          className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full flex items-center justify-center text-white transition-opacity hover:opacity-90"
+          style={{ background: "rgba(0,0,0,0.6)", border: "none", cursor: "pointer" }}
+          onClick={onRemove}
+          aria-label={`Remove ${label} image`}
+        >
+          <X size={12} strokeWidth={2.5} />
+        </button>
+      </div>
+    </div>
+  );
+
+  // Tall upload zone variant (used inside the modal so it matches the image height)
+  const renderUploadZone = (side: "before" | "after") => (
+    <div className="flex-1 min-w-0 flex flex-col">
+      <div style={ZONE_LABEL_STYLE}>{side}</div>
+      <label
+        className="flex flex-col items-center justify-center gap-2 rounded-lg transition-colors hover:bg-white/5 focus-within:ring-2 focus-within:ring-white/30"
+        style={{
+          border: "1.5px dashed rgba(255,255,255,0.35)",
+          height: "320px",
+          padding: "16px",
+          cursor: "pointer",
+          background: "rgba(255,255,255,0.03)",
+        }}
+      >
+        <Upload size={22} strokeWidth={1.5} color="rgba(255,255,255,0.7)" />
+        <span
+          style={{
+            ...MONO,
+            fontSize: "11px",
+            color: "rgba(255,255,255,0.7)",
+            textAlign: "center",
+            letterSpacing: "0.05em",
+          }}
+        >
+          Upload {side} image
+        </span>
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) handleUpload(side, f);
+            e.target.value = "";
+          }}
+        />
+      </label>
+    </div>
+  );
+
+  // Body content depends on upload state
+  let body: React.ReactNode;
+  if (beforeSrc && afterSrc) {
+    // Both images → slider
+    body = (
+      <div
+        style={{
+          width: "min(90vw, 1200px)",
+          height: "min(75vh, 700px)",
+        }}
+      >
+        <BeforeAfterSlider beforeSrc={beforeSrc} afterSrc={afterSrc} />
+        <div className="flex gap-3 justify-center mt-3">
+          <button style={{ ...REMOVE_BTN_STYLE, color: "rgba(255,255,255,0.7)" }} onClick={removeBefore}>
+            × Remove before
+          </button>
+          <button style={{ ...REMOVE_BTN_STYLE, color: "rgba(255,255,255,0.7)" }} onClick={removeAfter}>
+            × Remove after
+          </button>
+        </div>
+      </div>
+    );
+  } else {
+    // Empty or partial — two side-by-side columns
+    body = (
+      <div className="flex gap-4" style={{ width: "min(90vw, 900px)" }}>
+        {beforeSrc ? renderSingle(beforeSrc, "BEFORE", removeBefore) : renderUploadZone("before")}
+        {afterSrc ? renderSingle(afterSrc, "AFTER", removeAfter) : renderUploadZone("after")}
+      </div>
+    );
+  }
+
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Reference images"
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.85)",
+        zIndex: 9999,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        overflow: "hidden",
+      }}
+    >
+      <button
+        onClick={(e) => { e.stopPropagation(); onClose(); }}
+        style={{
+          position: "fixed", top: "1rem", right: "1rem", background: "none",
+          border: "none", color: "#fff", fontSize: "2rem", cursor: "pointer",
+          width: "32px", height: "32px", display: "flex", alignItems: "center",
+          justifyContent: "center", zIndex: 10001, padding: 0, lineHeight: 1,
+        }}
+        aria-label="Close"
+      >
+        ×
+      </button>
+
+      <div onClick={(e) => e.stopPropagation()}>{body}</div>
+    </div>,
+    document.body,
+  );
+}

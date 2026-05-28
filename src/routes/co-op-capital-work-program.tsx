@@ -6,7 +6,7 @@ import blueprintBg from "@/assets/bg_option5_blueprint.png";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { CoopInquiryForm } from "@/components/coop/CoopInquiryForm";
-import { ReferenceImageSection } from "@/components/ReferenceImageSection";
+import { ReferenceImageLightbox } from "@/components/ReferenceImageSection";
 
 export const Route = createFileRoute("/co-op-capital-work-program")({
   head: () => ({
@@ -123,7 +123,7 @@ const pricingData: PricingRowData[] = [
 // ─── Pricing row with before/after reference image slider ─────────────────────
 
 function PricingTableRow({ row, index }: { row: PricingRowData; index: number }) {
-  const [expanded, setExpanded] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   // Slug for localStorage keys: ref-before-{slug} / ref-after-{slug}
   const rowSlug = row.workType.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
@@ -211,17 +211,17 @@ function PricingTableRow({ row, index }: { row: PricingRowData; index: number })
           {row.notes}
         </td>
 
-        {/* Toggle */}
+        {/* Reference image lightbox toggle */}
         <td style={{ padding: "1rem 1.25rem", verticalAlign: "middle", textAlign: "center" }}>
           <button
-            onClick={() => setExpanded(!expanded)}
+            onClick={() => setLightboxOpen(true)}
             style={{
               width: "28px",
               height: "28px",
               borderRadius: "50%",
               border: "1px solid var(--border)",
-              background: expanded ? "#1C1814" : "transparent",
-              color: expanded ? "#F5EDE0" : "var(--charcoal)",
+              background: "transparent",
+              color: "var(--charcoal)",
               cursor: "pointer",
               display: "inline-flex",
               alignItems: "center",
@@ -230,33 +230,15 @@ function PricingTableRow({ row, index }: { row: PricingRowData; index: number })
               lineHeight: 1,
               padding: 0,
             }}
-            aria-label={expanded ? "Hide reference images" : "Show reference images"}
-            aria-pressed={expanded}
+            aria-label="View reference images"
           >
             <Eye size={16} strokeWidth={1.75} />
           </button>
         </td>
       </tr>
 
-      {/* Expanded before/after reference image panel */}
-      {expanded && (
-        <tr style={{ background: "rgba(237, 224, 208, 0.4)" }}>
-          <td colSpan={5} style={{ padding: "1.25rem 1.5rem" }}>
-            <p
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: "0.6875rem",
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                color: "var(--muted)",
-                margin: "0 0 0.75rem",
-              }}
-            >
-              Reference Image
-            </p>
-            <ReferenceImageSection rowSlug={rowSlug} />
-          </td>
-        </tr>
+      {lightboxOpen && (
+        <ReferenceImageLightbox rowSlug={rowSlug} onClose={() => setLightboxOpen(false)} />
       )}
     </>
   );
