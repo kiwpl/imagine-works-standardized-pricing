@@ -134,14 +134,32 @@ function PricingTableRow({ row, index }: { row: PricingRowData; index: number })
     reader.readAsDataURL(file);
   };
 
+  // ── Lightbox state ──────────────────────────────────────────────────────────
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [translateX, setTranslateX] = useState(0);
+  const [translateY, setTranslateY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef<{ mouseX: number; mouseY: number; tx: number; ty: number } | null>(null);
+  const hasDraggedRef = useRef(false);
 
   const openLightbox = () => {
     setZoomLevel(1);
+    setTranslateX(0);
+    setTranslateY(0);
+    setIsDragging(false);
     setIsLightboxOpen(true);
   };
 
+  // Reset pan whenever zoom returns to exactly 1×
+  useEffect(() => {
+    if (zoomLevel === 1) {
+      setTranslateX(0);
+      setTranslateY(0);
+    }
+  }, [zoomLevel]);
+
+  // Keyboard + wheel listeners while lightbox is open
   useEffect(() => {
     if (!isLightboxOpen) return;
 
@@ -149,6 +167,9 @@ function PricingTableRow({ row, index }: { row: PricingRowData; index: number })
       if (e.key === "Escape") {
         setIsLightboxOpen(false);
         setZoomLevel(1);
+        setTranslateX(0);
+        setTranslateY(0);
+        setIsDragging(false);
       }
       if (e.key === "+" || e.key === "=") {
         setZoomLevel((prev) => Math.min(5, prev + 0.25));
@@ -171,6 +192,49 @@ function PricingTableRow({ row, index }: { row: PricingRowData; index: number })
       window.removeEventListener("wheel", onWheel);
     };
   }, [isLightboxOpen]);
+
+  // ── Drag-to-pan handlers ────────────────────────────────────────────────────
+  const handleImageMouseDown = (e: React.MouseEvent) => {
+    if (zoomLevel <= 1) return;
+    e.stopPropagation();
+    e.preventDefault();
+    hasDraggedRef.current = false;
+    dragStartRef.current = { mouseX: e.clientX, mouseY: e.clientY, tx: translateX, ty: translateY };
+    setIsDragging(true);
+  };
+
+  const handleImageTouchStart = (e: React.TouchEvent) => {
+    if (zoomLevel <= 1) return;
+    e.stopPropagation();
+    hasDraggedRef.current = false;
+    const t = e.touches[0];
+    dragStartRef.current = { mouseX: t.clientX, mouseY: t.clientY, tx: translateX, ty: translateY };
+    setIsDragging(true);
+  };
+
+  const handleOverlayMouseMove = (e: React.MouseEvent) => {
+    if (!dragStartRef.current) return;
+    hasDraggedRef.current = true;
+    const dx = e.clientX - dragStartRef.current.mouseX;
+    const dy = e.clientY - dragStartRef.current.mouseY;
+    setTranslateX(dragStartRef.current.tx + dx);
+    setTranslateY(dragStartRef.current.ty + dy);
+  };
+
+  const handleOverlayTouchMove = (e: React.TouchEvent) => {
+    if (!dragStartRef.current) return;
+    hasDraggedRef.current = true;
+    const t = e.touches[0];
+    const dx = t.clientX - dragStartRef.current.mouseX;
+    const dy = t.clientY - dragStartRef.current.mouseY;
+    setTranslateX(dragStartRef.current.tx + dx);
+    setTranslateY(dragStartRef.current.ty + dy);
+  };
+
+  const stopDrag = () => {
+    dragStartRef.current = null;
+    setIsDragging(false);
+  };
 
   return (
     <>
@@ -401,7 +465,20 @@ function PricingTableRow({ row, index }: { row: PricingRowData; index: number })
           <div
             role="dialog"
             aria-modal="true"
-            onClick={() => { setIsLightboxOpen(false); setZoomLevel(1); }}
+            onClick={() => {
+              // Suppress close if the interaction was a drag, not a tap
+              if (hasDraggedRef.current) { hasDraggedRef.current = false; return; }
+              setIsLightboxOpen(false);
+              setZoomLevel(1);
+              setTranslateX(0);
+              setTranslateY(0);
+              setIsDragging(false);
+            }}
+            onMouseMove={handleOverlayMouseMove}
+            onMouseUp={stopDrag}
+            onMouseLeave={stopDrag}
+            onTouchMove={handleOverlayTouchMove}
+            onTouchEnd={stopDrag}
             style={{
               position: "fixed",
               inset: 0,
@@ -411,11 +488,19 @@ function PricingTableRow({ row, index }: { row: PricingRowData; index: number })
               alignItems: "center",
               justifyContent: "center",
               overflow: "hidden",
+              cursor: isDragging ? "grabbing" : "default",
             }}
           >
             {/* Close button */}
             <button
-              onClick={(e) => { e.stopPropagation(); setIsLightboxOpen(false); setZoomLevel(1); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsLightboxOpen(false);
+                setZoomLevel(1);
+                setTranslateX(0);
+                setTranslateY(0);
+                setIsDragging(false);
+              }}
               style={{
                 position: "fixed",
                 top: "1rem",
@@ -439,21 +524,24 @@ function PricingTableRow({ row, index }: { row: PricingRowData; index: number })
               ×
             </button>
 
-            {/* Zoomed image — pointer-events off so clicks fall through to backdrop */}
+            {/* Zoomed image — draggable when zoomed in */}
             <img
               src={image}
               alt="Reference — zoomed"
               draggable={false}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={handleImageMouseDown}
+              onTouchStart={handleImageTouchStart}
               style={{
                 maxWidth: "80vw",
                 maxHeight: "80vh",
                 objectFit: "contain",
-                transform: `scale(${zoomLevel})`,
+                transform: `translate(${translateX}px, ${translateY}px) scale(${zoomLevel})`,
                 transformOrigin: "center center",
-                transition: "transform 0.1s ease",
+                transition: isDragging ? "none" : "transform 0.1s ease",
                 userSelect: "none",
-                pointerEvents: "none",
                 display: "block",
+                cursor: isDragging ? "grabbing" : zoomLevel > 1 ? "grab" : "default",
               }}
             />
 
