@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Layers, Mail, Upload, X } from "lucide-react";
+import { createPortal } from "react-dom";
 
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
@@ -132,6 +133,44 @@ function PricingTableRow({ row, index }: { row: PricingRowData; index: number })
     reader.onload = (ev) => setImage(ev.target?.result as string);
     reader.readAsDataURL(file);
   };
+
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
+
+  const openLightbox = () => {
+    setZoomLevel(1);
+    setIsLightboxOpen(true);
+  };
+
+  useEffect(() => {
+    if (!isLightboxOpen) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsLightboxOpen(false);
+        setZoomLevel(1);
+      }
+      if (e.key === "+" || e.key === "=") {
+        setZoomLevel((prev) => Math.min(5, prev + 0.25));
+      }
+      if (e.key === "-") {
+        setZoomLevel((prev) => Math.max(0.5, prev - 0.25));
+      }
+    };
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.25 : -0.25;
+      setZoomLevel((prev) => Math.min(5, Math.max(0.5, prev + delta)));
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("wheel", onWheel);
+    };
+  }, [isLightboxOpen]);
 
   return (
     <>
@@ -266,11 +305,14 @@ function PricingTableRow({ row, index }: { row: PricingRowData; index: number })
                 <img
                   src={image}
                   alt="Reference"
+                  onClick={openLightbox}
+                  title="Click to zoom"
                   style={{
                     maxWidth: "100%",
                     maxHeight: "320px",
                     borderRadius: "8px",
                     display: "block",
+                    cursor: "zoom-in",
                   }}
                 />
                 <button
@@ -353,6 +395,138 @@ function PricingTableRow({ row, index }: { row: PricingRowData; index: number })
           </td>
         </tr>
       )}
+      {/* Lightbox */}
+      {isLightboxOpen && image && typeof document !== "undefined" &&
+        createPortal(
+          <div
+            role="dialog"
+            aria-modal="true"
+            onClick={() => { setIsLightboxOpen(false); setZoomLevel(1); }}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0, 0, 0, 0.85)",
+              zIndex: 9999,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              overflow: "hidden",
+            }}
+          >
+            {/* Close button */}
+            <button
+              onClick={(e) => { e.stopPropagation(); setIsLightboxOpen(false); setZoomLevel(1); }}
+              style={{
+                position: "fixed",
+                top: "1rem",
+                right: "1rem",
+                background: "none",
+                border: "none",
+                color: "#fff",
+                fontSize: "2rem",
+                cursor: "pointer",
+                width: "32px",
+                height: "32px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 10001,
+                padding: 0,
+                lineHeight: 1,
+              }}
+              aria-label="Close lightbox"
+            >
+              ×
+            </button>
+
+            {/* Zoomed image — pointer-events off so clicks fall through to backdrop */}
+            <img
+              src={image}
+              alt="Reference — zoomed"
+              draggable={false}
+              style={{
+                maxWidth: "80vw",
+                maxHeight: "80vh",
+                objectFit: "contain",
+                transform: `scale(${zoomLevel})`,
+                transformOrigin: "center center",
+                transition: "transform 0.1s ease",
+                userSelect: "none",
+                pointerEvents: "none",
+                display: "block",
+              }}
+            />
+
+            {/* Zoom controls */}
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                position: "fixed",
+                bottom: "2rem",
+                left: "50%",
+                transform: "translateX(-50%)",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.75rem",
+                background: "rgba(0, 0, 0, 0.6)",
+                borderRadius: "9999px",
+                padding: "0.5rem 1.25rem",
+                zIndex: 10001,
+              }}
+            >
+              <button
+                onClick={(e) => { e.stopPropagation(); setZoomLevel((prev) => Math.max(0.5, prev - 0.25)); }}
+                style={{
+                  background: "rgba(255, 255, 255, 0.15)",
+                  border: "none",
+                  color: "#fff",
+                  borderRadius: "9999px",
+                  width: "32px",
+                  height: "32px",
+                  cursor: "pointer",
+                  fontSize: "1.25rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                aria-label="Zoom out"
+              >
+                −
+              </button>
+              <span
+                style={{
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: "0.8125rem",
+                  color: "#fff",
+                  minWidth: "3rem",
+                  textAlign: "center",
+                }}
+              >
+                {zoomLevel.toFixed(1)}×
+              </span>
+              <button
+                onClick={(e) => { e.stopPropagation(); setZoomLevel((prev) => Math.min(5, prev + 0.25)); }}
+                style={{
+                  background: "rgba(255, 255, 255, 0.15)",
+                  border: "none",
+                  color: "#fff",
+                  borderRadius: "9999px",
+                  width: "32px",
+                  height: "32px",
+                  cursor: "pointer",
+                  fontSize: "1.25rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                aria-label="Zoom in"
+              >
+                +
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )}
     </>
   );
 }
