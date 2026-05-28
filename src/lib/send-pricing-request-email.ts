@@ -8,9 +8,8 @@ const emailInputSchema = z.object({
   email: z.string().email(),
   phone: z.string().optional(),
   propertyName: z.string(),
-  role: z.string().optional(),
   numberOfUnits: z.string().optional(),
-  timeline: z.string().optional(),
+  workCategories: z.array(z.string()),
   workCategories: z.array(z.string()),
   message: z.string().optional(),
 });
