@@ -231,7 +231,7 @@ export const sendPricingRequestEmail = createServerFn({ method: "POST" })
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "onboarding@resend.dev",
+          from: "noreply@fixunit.ca",
           to: ["philip.a@prelook.com"],
           cc: ["kelvin@prelook.com"],
           reply_to: data.email,
