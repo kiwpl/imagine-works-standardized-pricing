@@ -107,7 +107,6 @@ export function CoopInquiryForm() {
           propertyName: data.propertyName,
           role: data.role,
           numberOfUnits: data.numberOfUnits,
-          timeline: data.timeline,
           workCategories: data.workCategories,
           message: data.message,
         },
@@ -248,17 +247,7 @@ export function CoopInquiryForm() {
         />
       </div>
 
-      {/* Timeline (optional) */}
-      <div>
-        <label style={labelStyle}>
-          Timeline <span style={optionalMark}>(optional)</span>
-        </label>
-        <input
-          {...register("timeline")}
-          style={inputStyle}
-          placeholder="e.g. next 30 days, this quarter, this year"
-        />
-      </div>
+      {/* Work categories — 2-column grid */}
 
       {/* Work categories — 2-column grid */}
       <div>

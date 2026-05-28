@@ -17,10 +17,9 @@ export const submitCoopInquiry = createServerFn({ method: "POST" })
         contact_email: data.contactEmail,
         phone: data.phone ?? null,
         property_name: data.propertyName,
-        role: effectiveRole,
         number_of_units: data.numberOfUnits ?? null,
-        timeline: data.timeline ?? null,
         work_categories: data.workCategories,
+        message: data.message ?? null,
         message: data.message ?? null,
       },
     ]);
